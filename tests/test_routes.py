@@ -203,7 +203,7 @@ class TestProductRoutes(TestCase):
 
         updated_product = response.get_json()
         self.assertEqual(updated_product["description"], "unknown")
-    
+
     def test_update_product_not_found(self):
         """It should not Update a Product that does not exist"""
         new_product = ProductFactory().serialize()
@@ -215,6 +215,7 @@ class TestProductRoutes(TestCase):
         self.assertEqual(
             response.status_code, status.HTTP_404_NOT_FOUND
         )
+
     # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------

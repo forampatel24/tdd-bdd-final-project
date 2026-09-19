@@ -27,7 +27,7 @@ import os
 import logging
 import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+from service.models import Product, Category, DataValidationError, db
 from service import app
 from tests.factories import ProductFactory
 
@@ -219,3 +219,63 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+
+    def test_deserialize_invalid_available(self):
+        """It should reject a non-boolean available value"""
+        product = Product()
+        data = {
+            "name": "Test",
+            "description": "Test product",
+            "price": "10.00",
+            "available": "yes",
+            "category": "FOOD",
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
+
+    def test_deserialize_missing_field(self):
+        """It should reject missing required fields"""
+        product = Product()
+        with self.assertRaises(DataValidationError):
+            product.deserialize({})
+
+    def test_deserialize_invalid_category(self):
+        """It should reject an invalid category"""
+        product = Product()
+        data = {
+            "name": "Test",
+            "description": "Test product",
+            "price": "10.00",
+            "available": True,
+            "category": "NOT_A_CATEGORY",
+        }
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
+
+    def test_deserialize_none_data(self):
+        """It should reject None as input"""
+        product = Product()
+        with self.assertRaises(DataValidationError):
+            product.deserialize(None)
+
+    def test_find_by_price_decimal(self):
+        """It should find products by Decimal price"""
+        product = ProductFactory()
+        product.price = Decimal("12.50")
+        product.id = None
+        product.create()
+
+        found = Product.find_by_price(Decimal("12.50")).all()
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].price, Decimal("12.50"))
+
+    def test_find_by_price_string(self):
+        """It should find products by string price"""
+        product = ProductFactory()
+        product.price = Decimal("12.50")
+        product.id = None
+        product.create()
+
+        found = Product.find_by_price(' "12.50" ').all()
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].price, Decimal("12.50"))
